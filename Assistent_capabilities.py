@@ -68,12 +68,12 @@ class Action_controll:
                 'стоп': 'stop',
                 'звук': {
                     # Звук тише
-                    'убавить': {'action': pc_action.volume_down, 'type_value': 'INTEGER'},
-                    'уменьшить': 'voice_low',
-                    'снизь': 'voice_low',
-                    'приубавь': 'voice_low',
-                    'приглуши': 'voice_low',
-                    'тише': 'voice_low',
+                    'убавить': [pc_action.volume_down, 'INTEGER'],
+                    'уменьшить': [pc_action.volume_down, 'INTEGER'],
+                    'снизь': [pc_action.volume_down, 'INTEGER'],
+                    'приубавь': [pc_action.volume_down, 'INTEGER'],
+                    'приглуши': [pc_action.volume_down, 'INTEGER'],
+                    'тише': [pc_action.volume_down, 'INTEGER'],
                     # Звук громче
                     'прибавить': 'voice_high',
                     'увеличить': 'voice_high',
@@ -84,78 +84,97 @@ class Action_controll:
                         }
                 }
     def text_stable(self, engin):
-        if engin['action']['type_value'] == 'INTEGER':
-            enter_dot = False
+        # Определяем тип данных которые ищем
+        # Если нужны числовые данные
+        if engin['action']['action'][1] == 'INTEGER':
+            # Переводим в тексте данные в числа
             text = text_stable.words_to_numbers(engin['text'])
-            for token in text.split():
-                if enter_dot is False:
-                    if token == engin['chain'][-1]:
-                        enter_dot = True
-                else:
-                    try:
-                        return int(token)
-                    except:
-                        pass
+            # Ищем первый вход после токенов активаторов функции
+            for token in text.split()[max(engin['action']['chain']):]:
+                try:
+                    return int(token)
+                except:
+                    pass
 
-
+    # Запускаем команду
     def action_start(self, engin):
-        print(engin)
+        # Стабилизатор текста выдает значение передаваемое в функции в зависимости от её типа
         value = self.text_stable(engin)
-        print('VALUE=',value)
         if value:
-            engin['action'](value)
+            engin['action']['action'][0](value)
+        else:
+            engin['action']['action'][0]()
 
+    def search_fuction(self, text, enter_token):
+        '''
 
-    def action_controll(self, text, enter_token):
-        print(0)
-        print(text)
+        :param text:
+        :param enter_token:
+        :return:
+        '''
         # Разбираем текст на токены
         tokens = text.split()[enter_token:]
         text = ' '.join(tokens)
-        tokens_pars = tokens.copy()
         # Это у нас список действий
         all_action_list = self.action_list()
         searche_actions = {'action': [], 'chain': []}
         # Ищем токены в предложении
-        for _ in range(0, len(tokens_pars)):
+        for _ in range(0, len(tokens)):
+            # Для сбора токенов по которым найдено
             parent_chain = []
+
+            # Ищет функции
             def token_search(action_list):
                 rait_engin = {'key': str(), 'rait': 0}
+                # Перебираем сравнение токенов с ключами
                 for key in action_list.keys():
-                    for token in tokens_pars:
-                        print(rait_engin)
+                    for token in tokens:
                         rait = fuzz.ratio(key, token)
+                        # Находим лучший рейтинг
                         if rait > 70 and rait > rait_engin['rait']:
                             rait_engin['key'], rait_engin['rait'] = key, rait
+                # Если нашли нужные ключи
                 if rait_engin['rait'] != 0:
-                    parent_chain.append(rait_engin['key'])
+                    # Вытаскиваем индекс токена подошедшего
+                    index = tokens.index(rait_engin['key'])
+                    # Индекс заменятьеся на 0 что бы сохранить порядок но убрать повторение значения
+                    tokens[index] = '0'
+                    # В найденные пишем индекс в строке токена
+                    parent_chain.append(index)
+                    # Записываем функцию токена
                     result = action_list[rait_engin['key']]
+                    # Если результат это словарь то ищем в нем
                     if type(result) == dict:
                         return token_search(result)
                     else:
-                        return result
+                        return {'action': result, 'chain': parent_chain}
                 else:
                     return False
 
+            # Получаем найденную функцию и её создателей
             result = token_search(action_list=all_action_list)
-            tokens_pars = [i for i in tokens_pars if i not in parent_chain]
-
+            # Если функция найдена
             if result is not False:
-                print(result)
+                # Если функция строка отправляем запроснику для обработки
                 if type(result['action']) == str:
                     yield {'action': result, 'chain': parent_chain, 'text': text}
                 else:
-                    self.action_start({'action': result, 'chain': parent_chain, 'text': text})
+                    # Если функция это какая то реальная функция то запускаем её работу
+                    self.action_start({'action': result, 'text': text})
                 searche_actions['action'].append(result)
                 searche_actions['chain'].append(parent_chain)
             else:
                 break
+        # Нужно или обрабатывать тут функции и запоминать потоки или вернуть обратно для записи их существование
+        # Если исполняемые на моменте то нечего
 
 
 
 if __name__ == '__main__':
     action = Action_controll()
-    action.action_controll('убавить стоп звук', 0)
+    x = action.search_fuction('убавить стоп звук двадцать пять', 0)
+    for row in x:
+        print(row)
 
 
 """

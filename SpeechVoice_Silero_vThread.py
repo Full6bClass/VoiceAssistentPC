@@ -9,7 +9,6 @@ class Speech:
     def __init__(self, generate_device='cpu'):
         self.device = torch.device(generate_device)
         self.threads_sum = 4
-        self.local_file = 'C:\\P\\Python\\voice_model\\Silero\\v4_ru.pt'
         self.model = torch.package.PackageImporter(self.local_file).load_pickle("tts_models", "model")
         self.model.to(self.device)
         self.sample_rate = 48000

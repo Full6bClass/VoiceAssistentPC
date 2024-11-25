@@ -1,3 +1,7 @@
-x = [1]
-y = [1,2,3]
-print(y - x)
+x = ['звук', 'убавить,', 'стоп']
+y = ['убавить,', 'стоп']
+
+
+
+tokens = [i for i in x if i not in y]
+print(tokens)

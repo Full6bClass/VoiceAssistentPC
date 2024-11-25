@@ -1,6 +1,7 @@
 import re
 import re
 from num2words import num2words
+from words2numsrus.extractor import NumberExtractor
 
 
 class Text_spliter:
@@ -57,6 +58,9 @@ class Text_stable:
         return re.sub(r'\b\d+\b', replace_match, text)
 
 
+    def words_to_numbers(self, text):
+        extractor = NumberExtractor()
+        return extractor.replace_groups(text)
 
 
 
@@ -78,13 +82,11 @@ text = ('Для того чтобы сделать сухарики со вку�
 'Таким образом, главное отличие заключается в использовании специального ароматизатора, который придает продукту нужный вкус без необходимости добавлять сам сыр.')
 
 if __name__ == '__main__':
-    text_spliter = Text_spliter(text=text)
+    # text_spliter = Text_spliter(text=text)
     text_stable = Text_stable()
 
 if __name__ == 'NLP':
     text_stable = Text_stable()
-
-
 
 
 

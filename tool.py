@@ -16,3 +16,4 @@ def text_drober_naked(self, text):
     else:
         result = [text]
     return result
+

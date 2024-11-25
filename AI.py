@@ -34,13 +34,16 @@ class Assistent:
         self.action_list = {'speech': False}
 
 
-    def action_test(self, enter_token, text):
+
+    # Модуль обрабтки текущей ситуации при входном токене
+    def enter_action(self, enter_token):
         self.voice_enter = enter_token
         self.voice_write_status = True
         self.listen_text = str()
-        print(self.action_list['speech'])
+        # Если есть поток озвучки ставим его на паузу
         if self.action_list['speech']:
             self.action_list['speech'].pause()
+
 
 
 
@@ -114,23 +117,15 @@ class Assistent:
         TIMER = Thread(target=time_test)
         for text in voiceString.listen():
             try:
-                """Тут нужно раздробить на деление функций получение токена для текста и функции
-                if self.voice_enter == False:
-                    searched = self.enter_dot(text['Partial'])
-                    if searched:
-                        self.last_time_voice = datetime.now()
-                        TIMER.start()
-                        
-                if self.voice_enter and self.voice_write_status:
-                    self.last_time_voice = datetime.now()
-                """
                 enter_token = self.enter_dot_v2(text['Partial'])
-                if enter_token or enter_token == 0 and enter_token is not False:
-                    print('TEXT PARTIAL=', text['Partial'])
-                    print(enter_token)
-                    self.action_test(enter_token, text['Partial'])
+                # Если токен действия найден, входной токен еще не существует или не равен текущему(новый)
+                if enter_token is not False and self.voice_enter is False or self.voice_enter != enter_token:
+                    self.enter_action(enter_token)
                     self.last_time_voice = datetime.now()
                     TIMER.start()
+                # Если это не точка обновления текста из первого условия и при этом токен уже существует
+                elif self.voice_enter:
+                    action_controll(text['Partial'], self.voice_enter)
 
                 if self.voice_enter and self.voice_write_status:
                     self.last_time_voice = datetime.now()
@@ -140,6 +135,7 @@ class Assistent:
                 pass
 
             try:
+                # По сути проверка входного токена не требуется
                 if (self.voice_enter or self.voice_enter == 0 and self.voice_enter is not False and
                         self.voice_write_status): # 0 равно False
                     self.listen_text += text['Text']

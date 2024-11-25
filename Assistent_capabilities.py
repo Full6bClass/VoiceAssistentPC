@@ -1,4 +1,4 @@
-from seleniumwire import webdriver
+# from seleniumwire import webdriver
 from fuzzywuzzy import fuzz
 import os
 
@@ -34,21 +34,54 @@ class Browser:
         self.driver.get('yandex.ru')
 
 
-def action_controll(text):
-    action = {'стоп': 'stop'}
+def action_controll(text, enter_token):
+    # Разбираем текст на токены
+    tokens = text.split()[enter_token:]
+    # Это у нас список действий
+    all_action_list = {
+                'стоп': 'stop',
+                'звук': {
+                        'убавить': 'voice_low',
+                        'прибавить': 'voice_high'
+                        }
+              }
+    searche_actions = {'action': [], 'chain': []}
+    for _ in range(0, len(tokens)):
+        print(tokens)
+        parent_chain = []
+        def token_search(action_list):
+            rait_engin = {'key': str(), 'rait': 0}
+            for key in action_list.keys():
+                for token in tokens:
+                    rait = fuzz.ratio(key, token)
+                    if rait > 70 and rait > rait_engin['rait']:
+                        print(key, rait)
+                        rait_engin['key'], rait_engin['rait'] = key, rait
+            if rait_engin['rait'] != 0:
+                parent_chain.append(rait_engin['key'])
+                result = action_list[rait_engin['key']]
+                if type(result) == dict:
+                    return token_search(result)
+                else:
+                    return result
+            else:
+                return False
 
-    key_list = ['стоп']
-    for key in key_list:
-        if fuzz.partial_ratio(key, text) > 70:
-            return action[key]
+        tokens = [i for i in tokens if i not in parent_chain]
+        result = token_search(action_list=all_action_list)
+        if result is not False:
+            searche_actions['action'].append(result)
+            searche_actions['chain'].append(parent_chain)
+        else:
+            break
 
-    '''
-    Тут будет передаваться текст для выявления действия
+    return searche_actions
 
-    Если не найдено действие возвращаем ничего
-    :return:
-    '''
-    return False
+
+if __name__ == '__main__':
+
+    test = action_controll('звук убавить, стоп', 0)
+    print(test)
 
 """
 Список вункций

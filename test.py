@@ -1,39 +1,49 @@
-import time
-from threading import Thread, Event
+from fuzzywuzzy import fuzz
 
-class Check:
-    def __init__(self):
-        self.event = Event()  # Создаем событие
-        self.event.set()      # Устанавливаем событие в состояние "разрешено"
 
-    def start(self):
-        for row in range(1, 1001):  # Печатаем числа от 1 до 1000
-            print(row)
-            self.event.wait()  # Ожидаем, пока событие установлено
-            time.sleep(1)      # Задержка 1 секунда
+def token_search(token, action_list):
+    rait_engin = {'key': str(), 'rait': 0}
+    for key in action_list.keys():
+        rait = fuzz.ratio(key, token)
+        if rait > 70 and rait > rait_engin['rait']:
+            rait_engin['key'], rait_engin['rait'] = key, rait
 
-    def pause(self):
-        self.event.clear()  # Устанавливаем событие в состояние "приостановлено"
+    if rait_engin['rait'] != 0:
+        result = action_list[rait_engin['key']]
+        if isinstance(result, dict):
+            return None  # Возвращаем None, если значение - словарь
+        else:
+            return result
+    else:
+        return None
 
-    def resume(self):
-        self.event.set()    # Устанавливаем событие в состояние "разрешено"
 
-# Словарь для хранения потоков
-threads = {}
-check = Check()  # Создаем экземпляр класса Check
-c = Thread(target=check.start)  # Создаем поток для выполнения метода start
-c.start()  # Запускаем поток
-threads['1'] = check  # Сохраняем экземпляр Check в словаре
+def process_command(text):
+    # Разбираем текст на токены
+    tokens = text.split()
+    all_action_list = {
+        'стоп': 'stop',
+        'звук': {
+            'убавить': 'voice_low',
+            'прибавить': 'voice_high'
+        }
+    }
 
-print("Поток запущен. Введите 'pause' для паузы и 'resume' для возобновления.")
+    results = []
 
-while True:
-    command = input(': ')  # Ожидаем ввода команды
-    if command == 'pause':
-        threads['1'].pause()  # Приостанавливаем выполнение
-        print("Выполнение приостановлено.")
-    elif command == 'resume':
-        threads['1'].resume()  # Возобновляем выполнение
-        print("Выполнение возобновлено.")
-    elif command == 'exit':
-        break  # Выход из цикла
+    for token in tokens:
+        action = token_search(token, action_list=all_action_list)
+        if action is not None:
+            results.append((token, action))
+
+    return results if results else False  # Если нет результатов, возвращаем False
+
+
+# Пример использования
+command1 = "убавить звук стоп"
+matched_actions1 = process_command(command1)
+print(matched_actions1)  # Ожидается: [('убавить', 'voice_low'), ('стоп', 'stop')]
+
+command2 = "звук"
+matched_actions2 = process_command(command2)
+print(matched_actions2)  # Ожидается: False

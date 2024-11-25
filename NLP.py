@@ -20,6 +20,10 @@ class Text_spliter:
             if sentence:
                 self.proposal_list.append(sentence)
 
+        # Если нет предложений, добавляем весь текст как одно предложение
+        if not self.proposal_list:
+            self.proposal_list.append(self.text)
+
     def proposal_list_optimized(self, minimal_token=5):
         self.split_to_proposal()
         result = []

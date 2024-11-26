@@ -5,6 +5,7 @@ from datetime import datetime, date, timedelta
 from threading import Thread
 
 from fuzzywuzzy import fuzz
+from queue import Queue
 
 from Vosk_voice_v3 import OnlineTranscriber
 from GigaChat import chat
@@ -17,7 +18,7 @@ class Assistent:
     def __init__(self):
         """Настройки"""
         self.name = 'феликс' # Феноменально естевственный лексический интелект какогото свойства
-        self.listen_time_const = timedelta(seconds=3) # Допустимый разрыв в слушаемом тексте
+        self.listen_time_const = timedelta(seconds=5) # Допустимый разрыв в слушаемом тексте
 
         """Флаги"""
         self.voice_enter = False # Статус обработки текста меняеться если появилось имя ассистента
@@ -46,27 +47,20 @@ class Assistent:
 
 
     def function_controll(self, engin):
+
+        print('function_controll ENGIN=', engin)
         if engin:
             if engin['action'] == 'stop':
-                # Нужно придумать как заблокировать поток речи что бы таймер его не активировал обратно
-                pass
-
-
-    def enter_dot(self, text):
-        '''
-        Получаем текст, разбиваем на токены
-        если один из токенов имя ассистента то возвращаем номер токена
-        номер токена являеться входной точкой с которой будет начинаться запрос
-
-        :param text:
-        :return:
-        '''
-        tokens = text.split()
-        for n, token in enumerate(tokens):
-            if fuzz.ratio(self.name, token) > 80:
-                self.voice_enter = n
-                self.voice_write_status = True
-                return True
+                """
+                Почему то блокирует всю работу
+                """
+                if self.action_list['speech']:
+                    self.action_list['speech'].pause()
+                    self.action_list['speech'].audio_queue = Queue()
+                    self.action_list['speech'] = False
+                    self.action_list['speech'].resume()
+        # Почему то не очищает входную точку за собой
+        self.voice_enter = False
 
     def enter_dot_v2(self, text):
         '''
@@ -80,7 +74,7 @@ class Assistent:
         tokens = text.split()
         for n, token in enumerate(tokens):
             if fuzz.ratio(self.name, token) > 80:
-                print('TOKEN=', token, fuzz.ratio(self.name, token))
+                # print('TOKEN=', token, fuzz.ratio(self.name, token))
                 return n
         return False
 
@@ -110,6 +104,7 @@ class Assistent:
         def time_test():
             print('TIMER START')
             while True:
+                print('TIMER=', datetime.now() - self.last_time_voice > self.listen_time_const)
                 if datetime.now() - self.last_time_voice > self.listen_time_const:
                     if self.action_list['speech']:
                         self.action_list['speech'].resume()
@@ -118,14 +113,16 @@ class Assistent:
                     break
                 time.sleep(1)
 
-        TIMER = Thread(target=time_test)
+
         for text in voiceString.listen():
             try:
                 enter_token = self.enter_dot_v2(text['Partial'])
                 # Если токен действия найден, входной токен еще не существует или не равен текущему(новый)
+                print(enter_token, self.voice_enter, enter_token)
                 if enter_token is not False and self.voice_enter is False or self.voice_enter != enter_token:
                     self.start_action(enter_token) # Функция обработки момента точки входа
                     self.last_time_voice = datetime.now()
+                    TIMER = Thread(target=time_test)
                     TIMER.start()
                 # Если это не точка обновления текста из первого условия и при этом токен уже существует
                 elif self.voice_enter:
@@ -143,7 +140,11 @@ class Assistent:
                 # По сути проверка входного токена не требуется
                 if (self.voice_enter or self.voice_enter == 0 and self.voice_enter is not False and
                         self.voice_write_status): # 0 равно False
-                    for answer in action_controll.search_fuction(text['Text']):
+                    print('TEXT INPUT=', text['Text'])
+                    action_search = action_controll.search_fuction(text['Text'], self.voice_enter)
+                    print(action_search)
+                    for answer in action_search:
+                        print(answer)
                         if answer:
                             # Функция проверки действия
                             speech_flag = False
@@ -157,25 +158,19 @@ class Assistent:
 
     def speech(self):
         while True:
-            print(0)
-            print(self.voice_status)
             if self.voice_status:
-                print('voice_enter=', self.voice_enter)
-                print('listen_text=', self.listen_text)
-                print(self.listen_text.split()[self.voice_enter+1:])
                 text = ' '.join(self.listen_text.split()[self.voice_enter+1:])
-                print('---TEXT=', text)
-                """answer = chat.get_answer(text)
-                self.action_list['speech'] = chat
-                speeching = Thread(target=speech.speak_sentences, args=(answer, 'text'))
-                t = [speeching]
-                speeching.start()
+                print('CHAT TEXT=', text)
                 self.listen_text = ''
                 self.voice_enter = False
                 self.voice_status = False
-                for s in t:
-                    s.join()
-                    self.action_list['speech'] = False"""
+                answer = chat.get_answer(text)
+                self.action_list['speech'] = speech
+
+                speeching = Thread(target=speech.speak_sentences, args=(answer, 'text'))
+                speeching.start()
+                speeching.join()
+                self.action_list['speech'] = False
             time.sleep(3)
 
     def start(self):
@@ -188,13 +183,3 @@ class Assistent:
 
 assistent = Assistent()
 assistent.start()
-
-"""        for row in voiceString.listen():
-            try:
-                answer = chat.get_answer(row['Text'])
-                if answer == False:
-                  answer = 'Не понял ваш вопрос, не могли бы вы его повторить?'
-                print(answer.replace('"', ''))
-                sys.exit(0)
-            except:
-                pass"""

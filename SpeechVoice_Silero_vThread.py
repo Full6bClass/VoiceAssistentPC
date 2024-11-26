@@ -1,3 +1,5 @@
+import os
+
 import sounddevice as sd
 import numpy as np
 from queue import Queue
@@ -7,8 +9,10 @@ from NLP import Text_spliter
 
 class Speech:
     def __init__(self, generate_device='cpu'):
+        self.play_Permissions = True
         self.device = torch.device(generate_device)
         self.threads_sum = 4
+        self.local_file = os.getcwd() + '\\voice_model\\Silero\\v4_ru.pt'
         self.model = torch.package.PackageImporter(self.local_file).load_pickle("tts_models", "model")
         self.model.to(self.device)
         self.sample_rate = 48000
@@ -101,7 +105,8 @@ if __name__ == '__main__':
         elif command == 'resume':
             speech.resume()
 
-
+if __name__ == 'SpeechVoice_Silero_vThread':
+    speech = Speech()
 
 
 

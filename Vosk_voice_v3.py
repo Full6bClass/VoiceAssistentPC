@@ -12,6 +12,8 @@ class OnlineTranscriber:
 
     def __init__(self, model = 'voice_model/vosk/model_small', device = 1, audio_queue_size = 20, blocksize = 4000):
 
+
+
         # Установка модели
         self.model_path = os.path.join(os.getcwd(), *model.split('/'))
         self.model = vosk.Model(self.model_path)

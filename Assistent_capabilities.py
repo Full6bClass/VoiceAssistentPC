@@ -131,6 +131,7 @@ class Action_controll:
         :param enter_token:
         :return:
         '''
+        print('search_fuction=', text, enter_token)
         # Разбираем текст на токены
         tokens = text.split()[enter_token:]
         text = ' '.join(tokens)
@@ -193,9 +194,9 @@ class Action_controll:
 
 if __name__ == '__main__':
     pc_action = PC_action()
-    action = Action_controll()
-    x = action.search_fuction('кошка', 0)
-    for row in x:
+    action_controll = Action_controll()
+
+    for row in action_controll.search_fuction('кошка', 0):
         print(row)
 
 if __name__ == 'Assistent_capabilities':

@@ -60,15 +60,29 @@ class Browser:
     def open_yandex(self):
         self.driver.get('yandex.ru')
 
-pc_action = PC_action()
+
 class Action_controll:
-    print(1)
+
+    def __init__(self):
+        self.action_box = {}
+
+
     def action_list(self):
+        """
+        На данный момент структура хранимых функций:
+        [Функция, тип передаваемых данных, единаразовое действие или долгосрочная функция]
+        1. передается экземпляр функции
+        2. Тип данных если 0 то входные данные не требуются
+        3. Если функция вроде включить/выключить звук не требующая дальнейшего контроля то 0
+        если функция вроде браузера и будет работать в потоке то возвращаеться имя ключа в пуле потоков
+
+        :return:
+        """
         return {
                 'стоп': 'stop',
                 'звук': {
                     # Звук тише
-                    'убавить': [pc_action.volume_down, 'INTEGER'],
+                    'убавить': [pc_action.volume_down, 'INTEGER', 0],
                     'уменьшить': [pc_action.volume_down, 'INTEGER'],
                     'снизь': [pc_action.volume_down, 'INTEGER'],
                     'приубавь': [pc_action.volume_down, 'INTEGER'],
@@ -84,13 +98,18 @@ class Action_controll:
                         }
                 }
     def text_stable(self, engin):
+        """
+        Еще не реализована функция сохранения экземпляров класса для тех кто этого требует
+        :param engin:
+        :return:
+        """
         # Определяем тип данных которые ищем
         # Если нужны числовые данные
-        if engin['action']['action'][1] == 'INTEGER':
+        if engin['action'][1] == 'INTEGER':
             # Переводим в тексте данные в числа
             text = text_stable.words_to_numbers(engin['text'])
             # Ищем первый вход после токенов активаторов функции
-            for token in text.split()[max(engin['action']['chain']):]:
+            for token in text.split()[max(engin['chain']):]:
                 try:
                     return int(token)
                 except:
@@ -101,9 +120,9 @@ class Action_controll:
         # Стабилизатор текста выдает значение передаваемое в функции в зависимости от её типа
         value = self.text_stable(engin)
         if value:
-            engin['action']['action'][0](value)
+            engin['action'][0](value)
         else:
-            engin['action']['action'][0]()
+            engin['action'][0]()
 
     def search_fuction(self, text, enter_token):
         '''
@@ -157,24 +176,31 @@ class Action_controll:
             if result is not False:
                 # Если функция строка отправляем запроснику для обработки
                 if type(result['action']) == str:
-                    yield {'action': result, 'chain': parent_chain, 'text': text}
+                    yield {**result, 'text': text}
                 else:
                     # Если функция это какая то реальная функция то запускаем её работу
-                    self.action_start({'action': result, 'text': text})
-                searche_actions['action'].append(result)
-                searche_actions['chain'].append(parent_chain)
+                    self.action_start({**result, 'text': text})
+                    yield True
+                # searche_actions['action'].append(result)
+                # searche_actions['chain'].append(parent_chain)
             else:
                 break
+
         # Нужно или обрабатывать тут функции и запоминать потоки или вернуть обратно для записи их существование
         # Если исполняемые на моменте то нечего
 
 
 
 if __name__ == '__main__':
+    pc_action = PC_action()
     action = Action_controll()
-    x = action.search_fuction('убавить стоп звук двадцать пять', 0)
+    x = action.search_fuction('кошка', 0)
     for row in x:
         print(row)
+
+if __name__ == 'Assistent_capabilities':
+    pc_action = PC_action()
+    action_controll = Action_controll()
 
 
 """

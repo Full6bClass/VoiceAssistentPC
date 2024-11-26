@@ -36,7 +36,7 @@ class Assistent:
 
 
     # Модуль обрабтки текущей ситуации при входном токене
-    def enter_action(self, enter_token):
+    def start_action(self, enter_token):
         self.voice_enter = enter_token
         self.voice_write_status = True
         self.listen_text = str()
@@ -45,7 +45,11 @@ class Assistent:
             self.action_list['speech'].pause()
 
 
-
+    def function_controll(self, engin):
+        if engin:
+            if engin['action'] == 'stop':
+                # Нужно придумать как заблокировать поток речи что бы таймер его не активировал обратно
+                pass
 
 
     def enter_dot(self, text):
@@ -120,7 +124,7 @@ class Assistent:
                 enter_token = self.enter_dot_v2(text['Partial'])
                 # Если токен действия найден, входной токен еще не существует или не равен текущему(новый)
                 if enter_token is not False and self.voice_enter is False or self.voice_enter != enter_token:
-                    self.enter_action(enter_token)
+                    self.start_action(enter_token) # Функция обработки момента точки входа
                     self.last_time_voice = datetime.now()
                     TIMER.start()
                 # Если это не точка обновления текста из первого условия и при этом токен уже существует
@@ -135,11 +139,19 @@ class Assistent:
                 pass
 
             try:
+                speech_flag = True
                 # По сути проверка входного токена не требуется
                 if (self.voice_enter or self.voice_enter == 0 and self.voice_enter is not False and
                         self.voice_write_status): # 0 равно False
-                    self.listen_text += text['Text']
-                    self.last_time_voice = datetime.now()
+                    for answer in action_controll.search_fuction(text['Text']):
+                        if answer:
+                            # Функция проверки действия
+                            speech_flag = False
+                            self.function_controll(answer)
+
+                    if speech_flag:
+                        self.listen_text += text['Text']
+                        self.last_time_voice = datetime.now()
             except:
                 pass
 

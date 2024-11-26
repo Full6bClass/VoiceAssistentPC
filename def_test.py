@@ -1,7 +1,7 @@
-x = ['звук', 'убавить,', 'стоп']
-y = ['убавить,', 'стоп']
+x = {1: 2, 3: 4}
+y = {5: 6}
 
 
 
-tokens = [i for i in x if i not in y]
+tokens = {**x, 7:8}
 print(tokens)

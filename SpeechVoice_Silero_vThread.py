@@ -40,6 +40,8 @@ class Speech:
 
             while self.current_position < len(self.audio_buffer):
                 self.pause_event.wait()  # Ожидание, пока не будет разрешено продолжение
+                if self.play_Permissions is False:
+                    break
                 sd.sleep(10)  # Небольшая задержка для избежания излишней загрузки процессора
 
             self.stream.stop()

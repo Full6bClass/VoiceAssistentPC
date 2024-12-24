@@ -27,7 +27,7 @@ class Action_controll:
         На данный момент структура хранимых функций:
         [Функция, тип передаваемых данных, единаразовое действие или долгосрочная функция]
         1. передается экземпляр функции
-        2. Тип данных если 0 то входные данные не требуются
+        2. Тип данных если False то входные данные не требуются
         3. Если функция вроде включить/выключить звук не требующая дальнейшего контроля то True
         если функция вроде браузера и будет работать в потоке то возвращаеться имя ключа в пуле потоков
 
@@ -42,8 +42,23 @@ class Action_controll:
                     # Звук громче
                     ('прибавить', 'увеличить', 'повысить', 'усилить', 'поднять'): [audio_controll.volume_high_step, 'INTEGER', True],
                         },
-
+                # Поиск в браузере
                 ('найди', 'найти'): [{'class': Browser, 'func': 'yandex_search', 'class_name': 'Browser'}, 'STRING', True],
+
+                ('браузер'): {
+                    ('закрыть', 'отлючить', 'выключить'): [{'class': Browser, 'func': 'kick', 'class_name': 'Browser'}, 'STRING', True],
+                    ('закрыть', 'отлючить', 'выключить'): [{'class': Browser, 'func': 'kick', 'class_name': 'Browser'},
+                                                           False, True],
+
+                    ('ссылка'): [{'class': Browser, 'func': 'link_open', 'class_name': 'Browser'},
+                                                           'INTEGER', True],
+                             },
+                # Вкладки браузера
+                ('вкладка', 'вкладку'): {
+                    ('закрыть', 'закрой'):
+                        [{'class': Browser, 'func': 'tab_close', 'class_name': 'Browser'},
+                         False, True],
+        }
                 }
     def text_stable(self, engin):
         """
@@ -84,20 +99,27 @@ class Action_controll:
             engin_class = engin['action'][0]
             try:
                 class_ = self.action_box[engin_class['class_name']]
-                attr = getattr(class_(), engin_class['func'])
+                attr = getattr(class_, engin_class['func'])
                 if value:
-                    attr(value)
+                    r = attr(value)
                 else:
-                    attr()
+                    r = attr()
+                try:
+                    if r['action'] == 'kick':
+                        self.action_box.pop(engin_class['class_name'])
+                except:
+                    pass
                 return
             except:
-                class_ = engin_class['class']
+                class_ = engin_class['class']()
                 self.action_box[engin_class['class_name']] = class_
-                attr = getattr(class_(), engin_class['func'])
+                attr = getattr(class_, engin_class['func'])
                 if value:
                     attr(value)
                 else:
                     attr()
+
+
                 return
         except:
             if value:
@@ -186,7 +208,7 @@ if __name__ == '__main__':
 
     while True:
         text = input('TEXT = ')
-        for row in action_controll.search_fuction(f'найди {text}', 0):
+        for row in action_controll.search_fuction(f'{text}', 0):
             print(row)
         print(action_controll.action_box)
 

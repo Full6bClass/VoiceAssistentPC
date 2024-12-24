@@ -10,7 +10,7 @@ import os
 class Browser:
     def __init__(self):
         self.user_id = 'test'
-        self.driver = False
+        self.driver = self.Driver()
 
 
     def Driver(self):
@@ -36,8 +36,6 @@ class Browser:
         self.driver.get('https://ya.ru/')
 
     def yandex_search(self, text):
-        if self.driver is False:
-            self.driver = self.Driver()
         self.open_yandex()
 
         # Ожидание загрузки input по частичному совпадению класса
@@ -54,3 +52,17 @@ class Browser:
             EC.element_to_be_clickable((By.CSS_SELECTOR, "button[class*='search3__button']"))
         )
         search_button.click()
+
+    def link_open(self, number):
+        links = self.driver.find_elements(By.XPATH, ".//ul[@id='search-result']//a[starts-with(@href, 'https://')]")
+        links = [x for x in links if x.text]
+        links[number-1].click()
+
+    def tab_close(self):
+        self.driver.close()
+
+
+    def kick(self):
+        self.driver.quit()
+        return {'action': 'kick'}
+
